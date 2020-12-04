@@ -14,8 +14,8 @@ jobs:
           sudo apt install gitlint
       - name: Run tests
         run: |
-          pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-          messages=$(curl "https://api.github.com/repos/emqx/emqx/pulls/${pull_number}/commits")
+          pr_number=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+          messages=$(curl "https://api.github.com/repos/emqx/emqx/pulls/${pr_number}/commits")
           len=$(echo $messages | jq length)
           result=true
           for i in $( seq 0 $(($len - 1)) ); do
