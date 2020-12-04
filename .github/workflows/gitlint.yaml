@@ -15,6 +15,7 @@ jobs:
       - name: Run tests
         run: |
           pr_number=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+          echo ${GITHUB_REPOSITORY}
           messages=$(curl "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/commits")
           echo $pr_number is pr num
           echo $messages
