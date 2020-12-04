@@ -1,8 +1,8 @@
 # Contributing
 
 
-
 You are welcome to submit any bugs, issues and feature requests on this repository.
+
 
 ## Pull Request Process
 
