@@ -24,7 +24,6 @@ _EMQX_HOME='/opt/emqx'
 
 if [[ -z "$EMQX_NAME" ]]; then
     EMQX_NAME="$(hostname)"
-    export EMQX_NAME
 fi
 
 if [[ -z "$EMQX_HOST" ]]; then
@@ -37,16 +36,15 @@ if [[ -z "$EMQX_HOST" ]]; then
     else
         EMQX_HOST="$LOCAL_IP"
     fi
-    export EMQX_HOST
 fi
 
-if [[ -z "$EMQX_WAIT_TIME" ]]; then
-    export EMQX_WAIT_TIME=5
+if [[ -z "$EMQX_NODE__NAME" ]]; then
+    export EMQX_NODE__NAME="$EMQX_NAME@$EMQX_HOST"
 fi
 
-if [[ -z "$EMQX_NODE_NAME" ]]; then
-    export EMQX_NODE_NAME="$EMQX_NAME@$EMQX_HOST"
-fi
+# prevent interpretation as config values
+export EMQX_NAME=""
+export EMQX_HOST=""
 
 # Set hosts to prevent cluster mode failed
 
@@ -62,32 +60,32 @@ if [[ -z "$EMQX_NODE__MAX_ETS_TABLES" ]]; then
     export EMQX_NODE__MAX_ETS_TABLES=2097152
 fi
 
-if [[ -z "$EMQX__LOG_CONSOLE" ]]; then
-    export EMQX__LOG_CONSOLE='console'
+if [[ -z "$EMQX_LOG__TO" ]]; then
+    export EMQX_LOG__TO='console'
 fi
 
 if [[ -z "$EMQX_LISTENER__TCP__EXTERNAL__ACCEPTORS" ]]; then
     export EMQX_LISTENER__TCP__EXTERNAL__ACCEPTORS=64
 fi
 
-if [[ -z "$EMQX_LISTENER__TCP__EXTERNAL__MAX_CLIENTS" ]]; then
-    export EMQX_LISTENER__TCP__EXTERNAL__MAX_CLIENTS=1000000
+if [[ -z "$EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS" ]]; then
+    export EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS=1000000
 fi
 
 if [[ -z "$EMQX_LISTENER__SSL__EXTERNAL__ACCEPTORS" ]]; then
     export EMQX_LISTENER__SSL__EXTERNAL__ACCEPTORS=32
 fi
 
-if [[ -z "$EMQX_LISTENER__SSL__EXTERNAL__MAX_CLIENTS" ]]; then
-    export EMQX_LISTENER__SSL__EXTERNAL__MAX_CLIENTS=500000
+if [[ -z "$EMQX_LISTENER__SSL__EXTERNAL__MAX_CONNECTIONS" ]]; then
+    export EMQX_LISTENER__SSL__EXTERNAL__MAX_CONNECTIONS=500000
 fi
 
 if [[ -z "$EMQX_LISTENER__WS__EXTERNAL__ACCEPTORS" ]]; then
     export EMQX_LISTENER__WS__EXTERNAL__ACCEPTORS=16
 fi
 
-if [[ -z "$EMQX_LISTENER__WS__EXTERNAL__MAX_CLIENTS" ]]; then
-    export EMQX_LISTENER__WS__EXTERNAL__MAX_CLIENTS=250000
+if [[ -z "$EMQX_LISTENER__WS__EXTERNAL__MAX_CONNECTIONS" ]]; then
+    export EMQX_LISTENER__WS__EXTERNAL__MAX_CONNECTIONS=250000
 fi
 
 # Fix issue #42 - export env EMQX_DASHBOARD__DEFAULT_USER__PASSWORD to configure
