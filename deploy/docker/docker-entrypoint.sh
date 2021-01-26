@@ -39,7 +39,7 @@ if [[ -z "$EMQX_HOST" ]]; then
 fi
 
 if [[ -z "$EMQX_NODE__NAME" ]]; then
-    export EMQX_NODE__NAME="\"$EMQX_NAME@$EMQX_HOST\""
+    export EMQX_NODE__NAME="$EMQX_NAME@$EMQX_HOST"
 fi
 
 # prevent interpretation as config values
@@ -109,7 +109,11 @@ echo_value() {
     if echo "$key" | grep -iqwE "$FORMAT_MASK_CONFIG_FILTER"; then
         echo "$key=***secret***"
     else
+      if [[ "$value" = "null" ]]; then
+        echo "$key=null"
+      else
         echo "$key=$value"
+      fi
     fi
 }
 
@@ -122,10 +126,16 @@ override_config() {
     local conf
     conf=$(/usr/bin/lookup-plugin.sh "$key" "$_EMQX_HOME")
     if [[ -z "$value" ]] || [[ "$value" = "null" ]]; then
-      echo "$key = null" >> "$conf.override"
+      value="null"
+    elif [[ "$value" == "true" ]] || [[ "$value" == "false" ]]; then
+      :
+    elif  [[ $value =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]] ; then
+      :
     else
-      echo "$key = $value" >> "$conf.override"
+      value="\"$value\""
     fi
+    echo_value "$key" "$value"
+    echo "$key = $value" >> "$conf.override"
 }
 
 for VAR in $(compgen -e); do
