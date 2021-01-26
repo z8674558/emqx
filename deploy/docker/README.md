@@ -244,7 +244,7 @@ Let's create a static node list cluster from docker-compose.
         emqx-bridge:
           aliases:
           - node2.emqx.io
-  
+
   networks:
     emqx-bridge:
       driver: bridge
