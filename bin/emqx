@@ -192,7 +192,9 @@ lookup_plugin() {
   KEY=$1
 
   # shellcheck disable=SC2206
+  old_IFS=$IFS
   IFS='.' TOKENS=( $KEY )
+  IFS=$old_IFS
 
   MAYBE_CONF_0="$RUNNER_ETC_DIR/plugins/emqx_${TOKENS[0]}.conf"
   MAYBE_CONF_1="$RUNNER_ETC_DIR/plugins/emqx_${TOKENS[0]}_${TOKENS[1]}.conf"
@@ -286,7 +288,16 @@ generate_config() {
              if echo "$VAR" | grep -q '^EMQX_'; then
                  VAR_NAME=$(echo "$VAR" | sed -e 's/^EMQX_//' -e 's/__/./g' | tr '[:upper:]' '[:lower:]' | tr -d '[:cntrl:]')
                  VAR_VALUE=$(echo "${!VAR}" | tr -d '[:cntrl:]')
-                 if [[ $VAR_NAME != "port"* ]] && [[ $VAR_NAME != "service"* ]]; then
+                 if [[ $VAR_NAME != "port"* ]] &&
+                    [[ $VAR_NAME != "service"* ]] &&
+                    [[ $VAR_NAME != "node_name" ]] &&
+                    [[ $VAR_NAME != "node" ]] &&
+                    [[ $VAR_NAME != "host" ]] &&
+                    [[ $VAR_NAME != "wait_time" ]] &&
+                    [[ $VAR_NAME != "name" ]] &&
+                    [[ $VAR_NAME != *"max_clients" ]] &&
+                    [[ $VAR_NAME != "admin_password" ]] &&
+                    [[ $VAR_NAME != "_log_console" ]]; then
                      override_config "$VAR_NAME" "$VAR_VALUE"
                  fi
              fi
@@ -338,9 +349,9 @@ fi
 
 # Extract the target node name from node.args
 if [ -z "$NAME_ARG" ]; then
-    if [ -n "$EMQX_NODE__NAME" ]; then
+    if [ -n "$EMQX_NODE_NAME" ]; then
          # strip quotes
-         NODENAME=$(echo "$EMQX_NODE__NAME" | sed -e 's/^"//' -e 's/"$//')
+         NODENAME=$(echo "$EMQX_NODE_NAME" | sed -e 's/^"//' -e 's/"$//')
     elif [ ! -z `ps -ef | grep "$ERTS_PATH/beam.smp" | grep -o -E '\-name (\S*)' | awk '{print $2}'` ]; then
         NODENAME=`ps -ef | grep "$ERTS_PATH/beam.smp" | grep -o -E '\-name (\S*)' | awk '{print $2}'`
     else
