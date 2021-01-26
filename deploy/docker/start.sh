@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e -u
 
+. /opt/emqx/releases/emqx_vars
+
 emqx_exit(){
     # At least erlang.log.1 exists
     if [ -f /opt/emqx/log/erlang.log.1 ]; then
@@ -37,8 +39,19 @@ tail -f /opt/emqx/log/erlang.log.1 &
 #          you must let user know emqx crashed and stop this container,
 #          and docker dispatching system can known and restart this container.
 IDLE_TIME=0
+ERTS="/opt/emqx/erts-$ERTS_VSN"
 MGMT_CONF='/opt/emqx/etc/plugins/emqx_management.conf'
-MGMT_PORT=$(sed -n -r '/^management.listener.http.port[ \t]=[ \t].*$/p' $MGMT_CONF | sed -r 's/^management.listener.http.port = (.*)$/\1/g')
+MGMT_SCHEMA="$(find /opt/emqx/lib -name "emqx_management*" -type d)/priv/emqx_management.schema"
+
+# prevent interpretation by cuttlefish
+_EMQX_NODE_NAME="$EMQX_NODE_NAME"
+unset EMQX_NODE_NAME
+
+MGMT_CONFIG_ARGS=`$ERTS/bin/escript /opt/emqx/bin/cuttlefish -i $MGMT_SCHEMA -c $MGMT_CONF -d /tmp/configs generate`
+MGMT_CONFIG_FILE=`echo "$MGMT_CONFIG_ARGS" | sed -n 's/^.*\(-config[[:space:]]\)//p' | awk '{print $1}'`
+MGMT_PORT=$(sed -n s/\{listeners,[\{http,[[:digit:]]//p $MGMT_CONFIG_FILE | sed -e 's/[^0-9]//g')
+EMQX_NODE_NAME="$_EMQX_NODE_NAME"
+
 while [ $IDLE_TIME -lt 5 ]; do
     IDLE_TIME=$(expr $IDLE_TIME + 1)
     if curl http://localhost:${MGMT_PORT}/status >/dev/null 2>&1; then
