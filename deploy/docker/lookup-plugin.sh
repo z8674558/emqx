@@ -1,4 +1,8 @@
 #!/bin/bash
+set -eo pipefail
+
+# this script is a helper that takes a configuration key as an argument
+# and returns the corresponding conf file.
 
 KEY=$1
 HOME_DIR=$2
