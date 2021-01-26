@@ -96,58 +96,6 @@ fi
 
 export EMQX_ADMIN_PASSWORD=""
 
-# echo value of $VAR hiding secrets if any
-# SYNOPSIS
-#     echo_value KEY VALUE
-echo_value() {
-    # get MASK_CONFIG
-    MASK_CONFIG_FILTER="$MASK_CONFIG_FILTER|password|passwd|key|token|secret"
-    FORMAT_MASK_CONFIG_FILTER=$(echo "$MASK_CONFIG_FILTER" | sed -r -e 's/^[^A-Za-z0-9_]+//' -e 's/[^A-Za-z0-9_]+$//' -e 's/[^A-Za-z0-9_]+/|/g')
-    local key=$1
-    local value=$2
-    # check if contains sensitive value
-    if echo "$key" | grep -iqwE "$FORMAT_MASK_CONFIG_FILTER"; then
-        echo "$key=***secret***"
-    else
-      if [[ "$value" = "null" ]]; then
-        echo "$key=null"
-      else
-        echo "$key=$value"
-      fi
-    fi
-}
-
-# fill config on specific file if the key exists
-# SYNOPSIS
-#     try_fill_config FILE KEY VALUE
-override_config() {
-    local key=$1
-    local value=$2
-    local conf
-    conf=$(/usr/bin/lookup-plugin.sh "$key" "$_EMQX_HOME")
-    if [[ -z "$value" ]] || [[ "$value" = "null" ]]; then
-      value="null"
-    elif [[ "$value" == "true" ]] || [[ "$value" == "false" ]]; then
-      :
-    elif  [[ $value =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]] ; then
-      :
-    else
-      value="\"$value\""
-    fi
-    echo_value "$key" "$value"
-    echo "$key = $value" >> "$conf.override"
-}
-
-for VAR in $(compgen -e); do
-    if echo "$VAR" | grep -q '^EMQX_'; then
-        VAR_NAME=$(echo "$VAR" | sed -e 's/^EMQX_//' -e 's/__/./g' | tr '[:upper:]' '[:lower:]' | tr -d '[:cntrl:]')
-        VAR_VALUE=$(echo "${!VAR}" | tr -d '[:cntrl:]')
-        if [[ $VAR_NAME != "port"* ]] && [[ $VAR_NAME != "service"* ]]; then
-          override_config "$VAR_NAME" "$VAR_VALUE"
-        fi
-    fi
-done
-
 # fill tuples on specific file
 # SYNOPSIS
 #     fill_tuples FILE [ELEMENTS ...]
