@@ -2,8 +2,7 @@ name: Cross build packages
 
 on:
   push:
-    tags:
-      - v*
+
   release:
     types:
       - published

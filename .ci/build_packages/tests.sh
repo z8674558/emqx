@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -x -e -u
 export EMQX_NAME=${EMQX_NAME:-"emqx"}
 export PACKAGE_PATH="/emqx/_packages/${EMQX_NAME}"
@@ -60,12 +60,12 @@ emqx_test(){
                     echo "package install error"
                     exit 1
                 fi
-                
+
                 echo "running ${packagename} start"
-                running_test 
+                running_test
                 echo "running ${packagename} stop"
 
-                dpkg -r ${EMQX_NAME} 
+                dpkg -r ${EMQX_NAME}
                 if [ $(dpkg -l |grep emqx |awk '{print $1}') != "rc" ]
                 then
                     echo "package remove error"
@@ -86,16 +86,16 @@ emqx_test(){
                     echo "package install error"
                     exit 1
                 fi
-                
+
                 echo "running ${packagename} start"
-                running_test 
+                running_test
                 echo "running ${packagename} stop"
-                
+
                 rpm -e ${EMQX_NAME}
                 if [ "$(rpm -q emqx)" != "package emqx is not installed" ];then
                     echo "package uninstall error"
                     exit 1
-                fi  
+                fi
             ;;
 
         esac
