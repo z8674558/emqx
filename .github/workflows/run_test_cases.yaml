@@ -2,8 +2,7 @@ name: Run test case
 
 on:
   push:
-    tags:
-      - v*
+
   release:
     types:
       - published

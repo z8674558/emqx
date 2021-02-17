@@ -2,8 +2,7 @@ name: Compatibility Test Suite
 
 on:
   push:
-    tags:
-      - v*
+
   release:
     types:
       - published
