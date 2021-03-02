@@ -2,11 +2,10 @@
 
 -export([do/2]).
 
-do(Dir, CONFIG) ->
-    ok = compile_and_load_pase_transforms(Dir),
+do(_Dir, CONFIG) ->
     C1 = deps(CONFIG),
     Config = dialyzer(C1),
-    dump(Config ++ coveralls() ++ config()).
+    dump(Config ++ [{overrides, overrides()}] ++ coveralls() ++ config()).
 
 bcrypt() ->
     {bcrypt, {git, "https://github.com/emqx/erlang-bcrypt.git", {branch, "0.6.0"}}}.
@@ -18,6 +17,14 @@ deps(Config) ->
         false -> []
     end,
     lists:keystore(deps, 1, Config, {deps, OldDpes ++ MoreDeps}).
+
+overrides() ->
+    [ {add, [ {extra_src_dirs, [{"etc", [{recursive,true}]}]}
+            , {erl_opts, [ deterministic
+                         , {compile_info, [{emqx_vsn, get_vsn()}]}
+                         ]}
+            ]}
+    ].
 
 config() ->
     [ {plugins, plugins()}
@@ -51,27 +58,41 @@ test_deps() ->
     , meck
     ].
 
-default_compile_opts() ->
-    [compressed, deterministic, no_debug_info, warnings_as_errors, {parse_transform, mod_vsn}].
+common_compile_opts() ->
+    [ deterministic
+    , {compile_info, [{emqx_vsn, get_vsn()}]}
+    ].
+
+prod_compile_opts() ->
+    [ compressed
+    , no_debug_info
+    , warnings_as_errors
+    | common_compile_opts()
+    ].
+
+test_compile_opts() ->
+    [ debug_info
+    | common_compile_opts()
+    ].
 
 profiles() ->
-    [ {'emqx',          [ {erl_opts, default_compile_opts()}
+    [ {'emqx',          [ {erl_opts, prod_compile_opts()}
                         , {relx, relx('emqx')}
                         ]}
-    , {'emqx-pkg',      [ {erl_opts, default_compile_opts()}
+    , {'emqx-pkg',      [ {erl_opts, prod_compile_opts()}
                         , {relx, relx('emqx-pkg')}
                         ]}
-    , {'emqx-edge',     [ {erl_opts, default_compile_opts()}
+    , {'emqx-edge',     [ {erl_opts, prod_compile_opts()}
                         , {relx, relx('emqx-edge')}
                         ]}
-    , {'emqx-edge-pkg', [ {erl_opts, default_compile_opts()}
+    , {'emqx-edge-pkg', [ {erl_opts, prod_compile_opts()}
                         , {relx, relx('emqx-edge-pkg')}
                         ]}
-    , {check,           [ {erl_opts, [debug_info, warnings_as_errors, {parse_transform, mod_vsn}]}
+    , {check,           [ {erl_opts, test_compile_opts()}
                         ]}
     , {test,            [ {deps, test_deps()}
                         , {plugins, test_plugins()}
-                        , {erl_opts, [debug_info, {parse_transform, mod_vsn}] ++ erl_opts_i()}
+                        , {erl_opts, test_compile_opts() ++ erl_opts_i()}
                         , {extra_src_dirs, [{"test", [{recursive,true}]}]}
                         ]}
     ].
@@ -126,6 +147,7 @@ relx_apps(ReleaseType) ->
     , emqx
     , {mnesia, load}
     , {ekka, load}
+    , {emqx_plugin_libs, load}
     ]
     ++ [bcrypt || provide_bcrypt_release(ReleaseType)]
     ++ relx_apps_per_rel(ReleaseType)
@@ -275,20 +297,6 @@ provide_bcrypt_dep() ->
 
 provide_bcrypt_release(ReleaseType) ->
     provide_bcrypt_dep() andalso ReleaseType =:= cloud.
-
-%% this is a silly but working patch.
-%% rebar3 does not handle umberella project's cross-app parse_transform well
-compile_and_load_pase_transforms(Dir) ->
-    PtFiles =
-        [ "apps/emqx_rule_engine/src/emqx_rule_actions_trans.erl"
-        ],
-    CompileOpts = [verbose,report_errors,report_warnings,return_errors,debug_info],
-    lists:foreach(fun(PtFile) -> {ok, _Mod} = compile:file(path(Dir, PtFile), CompileOpts) end, PtFiles).
-
-path(Dir, Path) -> str(filename:join([Dir, Path])).
-
-str(L) when is_list(L) -> L;
-str(B) when is_binary(B) -> unicode:characters_to_list(B, utf8).
 
 erl_opts_i() ->
     [{i, "apps"}] ++
