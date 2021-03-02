@@ -237,11 +237,11 @@ import_resources_and_rules(Resources, Rules, FromVersion)
                                           <<"url">> => URL,
                                           <<"verify">> => true},
                               NResource = Resource#{<<"config">> := NConfig},
-                              {ok, _Resource} = import_resource(NResource),
+                              _ = import_resource(NResource),
                               NHeaders = maps:put(<<"content-type">>, ContentType, Headers),
                               [{ID, #{headers => NHeaders, method => Method}} | Acc];
                              (Resource, Acc) ->
-                              {ok, _Resource} = import_resource(Resource),
+                              _ = import_resource(Resource),
                               Acc
                           end, [], Resources),
     lists:foreach(fun(#{<<"actions">> := Actions} = Rule) ->
