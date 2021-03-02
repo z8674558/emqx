@@ -205,7 +205,7 @@ store_retained(Msg = #message{topic = Topic, payload = Payload}, Env) ->
                                                msg = Msg,
                                                expiry_time = get_expiry_time(Msg, Env)});
         {true, false} ->
-            case mnesia:dirty_read(?TAB, Topic) of
+            case mnesia:read(?TAB, Topic) of
                 [_] ->
                     mnesia:dirty_write(?TAB, #retained{topic = topic2tokens(Topic),
                                                        msg = Msg,
