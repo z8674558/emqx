@@ -11,12 +11,16 @@ bcrypt() ->
     {bcrypt, {git, "https://github.com/emqx/erlang-bcrypt.git", {branch, "0.6.0"}}}.
 
 deps(Config) ->
-    {deps, OldDpes} = lists:keyfind(deps, 1, Config),
+    {deps, OldDeps} = lists:keyfind(deps, 1, Config),
     MoreDeps = case provide_bcrypt_dep() of
         true -> [bcrypt()];
         false -> []
     end,
-    lists:keystore(deps, 1, Config, {deps, OldDpes ++ MoreDeps}).
+    lists:keystore(deps, 1, Config, {deps, OldDeps ++ MoreDeps ++ community_deps()}).
+
+community_deps() ->
+    {ok, Proplist} = file:consult("community-plugins"),
+    proplists:get_value(erlang_plugins, Proplist).
 
 overrides() ->
     [ {add, [ {extra_src_dirs, [{"etc", [{recursive,true}]}]}
@@ -25,7 +29,10 @@ overrides() ->
                          | [{d, 'EMQX_ENTERPRISE'} || is_enterprise()]
                          ]}
             ]}
-    ].
+    ] ++ community_plugin_overrides().
+
+community_plugin_overrides() ->
+    [{add, App, [ {erl_opts, [{i, "include"}]}]} || App <- relx_plugin_apps_community()].
 
 config() ->
     [ {plugins, plugins()}
@@ -186,7 +193,8 @@ relx_plugin_apps(ReleaseType) ->
     , emqx_modules
     ]
     ++ relx_plugin_apps_per_rel(ReleaseType)
-    ++ relx_plugin_apps_enterprise(is_enterprise()).
+    ++ relx_plugin_apps_enterprise(is_enterprise())
+    ++ relx_plugin_apps_community().
 
 relx_plugin_apps_per_rel(cloud) ->
     [ emqx_lwm2m
@@ -207,6 +215,9 @@ relx_plugin_apps_enterprise(true) ->
     [list_to_atom(A) || A <- filelib:wildcard("*", "lib-ee"),
                         filelib:is_dir(filename:join(["lib-ee", A]))];
 relx_plugin_apps_enterprise(false) -> [].
+
+relx_plugin_apps_community() ->
+    [Plugin || {Plugin, _} <- community_deps()].
 
 relx_overlay(ReleaseType) ->
     [ {mkdir,"log/"}
@@ -235,7 +246,8 @@ relx_overlay(ReleaseType) ->
 etc_overlay(ReleaseType) ->
     PluginApps = relx_plugin_apps(ReleaseType),
     Templates = emqx_etc_overlay(ReleaseType) ++
-                lists:append([plugin_etc_overlays(App) || App <- PluginApps]),
+                lists:append([plugin_etc_overlays(App) || App <- PluginApps]) ++
+                [community_plugin_etc_overlays(App) || App <- relx_plugin_apps_community()],
     [ {mkdir, "etc/"}
     , {mkdir, "etc/plugins"}
     , {template, "etc/BUILT_ON", "releases/{{release_version}}/BUILT_ON"}
@@ -274,6 +286,10 @@ plugin_etc_overlays(App0) ->
     %% NOTE: not filename:join here since relx translates it for windows
     [{"{{base_dir}}/lib/"++ App ++"/etc/" ++ F, "etc/plugins/" ++ F}
      || F <- ConfFiles].
+
+community_plugin_etc_overlays(App0) ->
+    App = atom_to_list(App0),
+    {"{{base_dir}}/lib/"++ App ++"/etc/" ++ App ++ ".conf", "etc/plugins/" ++ App ++ ".conf"}.
 
 %% NOTE: for apps fetched as rebar dependency (there is so far no such an app)
 %% the overlay should be hand-coded but not to rely on build-time wildcards.
