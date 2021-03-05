@@ -2,8 +2,7 @@ name: Run test case
 
 on:
   push:
-    tags:
-      - v*
+
   release:
     types:
       - published
@@ -40,11 +39,14 @@ jobs:
                    EMQX_AUTH__PGSQL__USERNAME=root \
                    EMQX_AUTH__PGSQL__PASSWORD=public \
                    EMQX_AUTH__PGSQL__DATABASE=mqtt \
-                   CUTTLEFISH_ENV_OVERRIDE_PREFIX=EMQX_
+                   EMQX_EXTRA_PLUGINS=all
             printenv > .env
             docker exec -i erlang bash -c "make xref"
-            docker exec --env-file .env -i erlang bash -c "make ct"
+            docker exec --env-file .env -i erlang bash -c "./rebar3 eunit --dir lib-extra/emqx_plugin_template"
             docker exec --env-file .env -i erlang bash -c "make eunit"
+
+            docker exec --env-file .env -i erlang bash -c "make ct"
+
             docker exec -i erlang bash -c "make cover"
             docker exec -i erlang bash -c "make coveralls"
         - uses: actions/upload-artifact@v1

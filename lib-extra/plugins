@@ -1,0 +1,5 @@
+{erlang_plugins,
+  [
+  {emqx_plugin_template, {git, "https://github.com/z8674558/emqx-plugin-template", {branch, "umbrella"}}}
+  ]
+}.
