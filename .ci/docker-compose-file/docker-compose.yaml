@@ -17,6 +17,7 @@ services:
     networks:
       - emqx_bridge
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ../..:/emqx
     working_dir: /emqx
     tty: true
