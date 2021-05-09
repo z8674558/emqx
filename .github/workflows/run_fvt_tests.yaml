@@ -2,9 +2,6 @@ name: Functional Verification Tests
 
 on:
   push:
-    tags:
-      - v*
-      - e*
   release:
     types:
       - published
@@ -107,6 +104,7 @@ jobs:
                 --set image.pullPolicy=Never \
                 --set emqxConfig.EMQX_ZONE__EXTERNAL__RETRY_INTERVAL=2s \
                 --set emqxConfig.EMQX_MQTT__MAX_TOPIC_ALIAS=10 \
+                --set emqxConfig.EMQX_LOADED_PLUGINS="emqx_retainer" \
                 deploy/charts/emqx \
                 --debug
 
