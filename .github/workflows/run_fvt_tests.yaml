@@ -52,7 +52,7 @@ jobs:
             output=$(docker exec -i node1.emqx.io bash -c "cat data/loaded_plugins" | tail -n1)
             if [ "$expected" != "$output" ]; then
                 exit 1
-            fi    
+            fi
         - name: make paho tests
           run: |
             if ! docker exec -i python /scripts/pytest.sh; then
@@ -158,6 +158,7 @@ jobs:
             exit $RESULT
 
     relup_test:
+        if: ${{ github.ref != 'refs/heads/dev/v5.0' && github.event.pull_request.head.ref != 'refs/heads/dev/v5.0'}}
         runs-on: ubuntu-20.04
         container: emqx/build-env:erl23.2.7.2-emqx-2-ubuntu20.04
         defaults:
