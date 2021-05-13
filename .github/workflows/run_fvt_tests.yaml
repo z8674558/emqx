@@ -2,9 +2,7 @@ name: Functional Verification Tests
 
 on:
   push:
-    tags:
-      - v*
-      - e*
+
   release:
     types:
       - published
@@ -196,6 +194,8 @@ jobs:
             fetch-depth: 0
         - name: prepare
           run: |
+            echo ${{ github.head_ref }}
+            echo ${{ github.base_ref }}
             if make -C emqx emqx-ee --dry-run > /dev/null 2>&1; then
               echo "https://ci%40emqx.io:${{ secrets.CI_GIT_TOKEN }}@github.com" > $HOME/.git-credentials
               git config --global credential.helper store
